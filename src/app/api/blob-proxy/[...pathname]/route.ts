@@ -1,4 +1,4 @@
-import { get } from "@vercel/blob";
+import { download } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -40,17 +40,19 @@ export async function GET(
     console.log("✅ Blob proxy: Token validated, fetching blob:", fullPathname);
 
     // Fetch private blob using Vercel Blob SDK
-    const result = await get(fullPathname, { access: "private" });
+    const blob = await download(fullPathname, {
+      access: "private",
+    });
 
-    if (!result) {
+    if (!blob) {
       console.warn("⚠️ Blob proxy: Blob not found:", fullPathname);
       return new NextResponse("Not found", { status: 404 });
     }
 
     // Return blob stream with correct content type
-    return new NextResponse(result.stream, {
+    return new NextResponse(blob, {
       headers: {
-        "Content-Type": result.blob.contentType || "application/octet-stream",
+        "Content-Type": blob.type || "application/octet-stream",
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "private, max-age=60",
       },
